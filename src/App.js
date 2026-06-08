@@ -273,9 +273,9 @@ function EditModal({ year, month, day, entry, onSave, onClose }) {
               <div className="text-xs font-bold text-sky-600 uppercase tracking-widest flex items-center gap-2">
                 <IceBlade/> AM 스케이팅
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-end gap-2">
                 {["amStart","amEnd"].map((k,i) => (
-                  <div key={k}>
+                  <div key={k} className="flex-1">
                     <label className="block text-xs text-slate-500 mb-1">{i===0?"시작":"종료"}</label>
                     <input value={form[k]} onChange={e => set(k, e.target.value)}
                       placeholder="예: 7 또는 7:30"
@@ -283,18 +283,21 @@ function EditModal({ year, month, day, entry, onSave, onClose }) {
                       style={{ background: "#ffffff", border: "1px solid #bfdbfe" }}/>
                   </div>
                 ))}
-              </div>
-              <div className="flex gap-2">
-                {[{key:"amFenceSet",label:"팬스 치기",Icon:FenceIcon},{key:"amFenceRemove",label:"팬스 걷기",Icon:WalkIcon}].map(({key,label,Icon})=>(
-                  <label key={key} className="flex items-center gap-2 flex-1 p-2 rounded-lg cursor-pointer select-none"
-                         style={{ background:"#ffffff", border:"1px solid #dbeafe" }}>
-                    <input type="checkbox" checked={!!form[key]} onChange={e=>set(key,e.target.checked)} className="hidden"/>
-                    <div className={`w-4 h-4 rounded flex items-center justify-center transition-all ${form[key]?"bg-sky-500":"border-2 border-slate-300"}`}>
-                      {form[key]&&<svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.5"><polyline points="2,6 5,9 10,3"/></svg>}
-                    </div>
-                    <span className={`flex items-center gap-1 text-xs font-medium ${form[key]?"text-sky-700":"text-slate-500"}`}><Icon/>{label}</span>
-                  </label>
-                ))}
+                <div className="flex flex-col gap-1 pb-0.5">
+                  <label className="block text-xs text-slate-500 mb-0.5 text-center">팬스</label>
+                  <div className="flex gap-1">
+                    {[{key:"amFenceSet",Icon:FenceIcon,label:"치기",on:"bg-amber-400"},{key:"amFenceRemove",Icon:WalkIcon,label:"걷기",on:"bg-purple-400"}].map(({key,Icon,label,on})=>(
+                      <label key={key} className="flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-lg cursor-pointer select-none transition-all"
+                             style={{ background: form[key]?"":"#ffffff", border: form[key]?"2px solid transparent":"1px solid #dbeafe",
+                               boxShadow: form[key]?"0 0 0 2px #60a5fa":"none",
+                               background: form[key]?(on==="bg-amber-400"?"#fef3c7":"#f3e8ff"):"#ffffff" }}>
+                        <input type="checkbox" checked={!!form[key]} onChange={e=>set(key,e.target.checked)} className="hidden"/>
+                        <span className={form[key]?(on==="bg-amber-400"?"text-amber-600":"text-purple-600"):"text-slate-400"}><Icon/></span>
+                        <span className={`text-[9px] font-bold ${form[key]?(on==="bg-amber-400"?"text-amber-700":"text-purple-700"):"text-slate-400"}`}>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -316,18 +319,6 @@ function EditModal({ year, month, day, entry, onSave, onClose }) {
                     className="w-full px-3 py-2 rounded-lg text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-emerald-400"
                     style={{ background: "#ffffff", border: "1px solid #a7f3d0" }}/>
                 </div>
-              </div>
-              <div className="flex gap-2">
-                {[{key:"pmFenceSet",label:"팬스 치기",Icon:FenceIcon},{key:"pmFenceRemove",label:"팬스 걷기",Icon:WalkIcon}].map(({key,label,Icon})=>(
-                  <label key={key} className="flex items-center gap-2 flex-1 p-2 rounded-lg cursor-pointer select-none"
-                         style={{ background:"#ffffff", border:"1px solid #d1fae5" }}>
-                    <input type="checkbox" checked={!!form[key]} onChange={e=>set(key,e.target.checked)} className="hidden"/>
-                    <div className={`w-4 h-4 rounded flex items-center justify-center transition-all ${form[key]?"bg-emerald-500":"border-2 border-slate-300"}`}>
-                      {form[key]&&<svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.5"><polyline points="2,6 5,9 10,3"/></svg>}
-                    </div>
-                    <span className={`flex items-center gap-1 text-xs font-medium ${form[key]?"text-emerald-700":"text-slate-500"}`}><Icon/>{label}</span>
-                  </label>
-                ))}
               </div>
             </div>
 
@@ -408,13 +399,13 @@ function DetailModal({ year, month, day, entry, onEdit, onClose }) {
                       <div className="text-xs text-slate-400">종료</div>
                       <div className="text-2xl font-black text-sky-600">{entry.amEnd || "—"}</div>
                     </div>
+                    {(entry.amFenceSet || entry.amFenceRemove) && (
+                      <div className="flex flex-col gap-1 ml-1">
+                        {entry.amFenceSet    && <Pill color="amber"><FenceIcon/>치기</Pill>}
+                        {entry.amFenceRemove && <Pill color="purple"><WalkIcon/>걷기</Pill>}
+                      </div>
+                    )}
                   </div>
-                  {(entry.amFenceSet || entry.amFenceRemove) && (
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {entry.amFenceSet    && <Pill color="amber"><FenceIcon/>팬스 치기</Pill>}
-                      {entry.amFenceRemove && <Pill color="purple"><WalkIcon/>팬스 걷기</Pill>}
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -431,12 +422,6 @@ function DetailModal({ year, month, day, entry, onEdit, onClose }) {
                       <div className="text-lg font-bold text-emerald-700">{entry.pmSkating || "—"}</div>
                     </div>
                   </div>
-                  {(entry.pmFenceSet || entry.pmFenceRemove) && (
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {entry.pmFenceSet    && <Pill color="amber"><FenceIcon/>팬스 치기</Pill>}
-                      {entry.pmFenceRemove && <Pill color="purple"><WalkIcon/>팬스 걷기</Pill>}
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -504,9 +489,11 @@ function CalendarCell({ day, year, month, entry, isToday, onClick, bulkMode, isS
       )}
 
       {!isRest && hasAM && (
-        <div className="flex items-center gap-1 mb-0.5">
+        <div className="flex items-center gap-1 mb-0.5 flex-wrap">
           <div className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0"/>
-          <span className="text-[9px] text-sky-600 font-medium truncate">{entry.amStart}~{entry.amEnd}</span>
+          <span className="text-[9px] text-sky-600 font-medium">{entry.amStart}~{entry.amEnd}</span>
+          {entry?.amFenceSet    && <span className="text-[8px] px-1 py-0.5 rounded text-amber-700 font-bold" style={{ background: "rgba(245,158,11,0.15)" }}>팬↑</span>}
+          {entry?.amFenceRemove && <span className="text-[8px] px-1 py-0.5 rounded text-purple-700 font-bold" style={{ background: "rgba(139,92,246,0.12)" }}>팬↓</span>}
         </div>
       )}
 
@@ -517,14 +504,11 @@ function CalendarCell({ day, year, month, entry, isToday, onClick, bulkMode, isS
         </div>
       )}
 
-      {/* badges */}
-      <div className="flex flex-wrap gap-0.5 mt-1">
-        {entry?.amFenceSet    && <span className="text-[8px] px-1 py-0.5 rounded text-amber-700 font-bold" style={{ background: "rgba(245,158,11,0.15)" }}>AM↑</span>}
-        {entry?.amFenceRemove && <span className="text-[8px] px-1 py-0.5 rounded text-purple-700 font-bold" style={{ background: "rgba(139,92,246,0.12)" }}>AM↓</span>}
-        {entry?.pmFenceSet    && <span className="text-[8px] px-1 py-0.5 rounded text-amber-700 font-bold" style={{ background: "rgba(245,158,11,0.20)" }}>PM↑</span>}
-        {entry?.pmFenceRemove && <span className="text-[8px] px-1 py-0.5 rounded text-purple-700 font-bold" style={{ background: "rgba(139,92,246,0.18)" }}>PM↓</span>}
-        {entry?.subway        && <span className="text-[8px] px-1 py-0.5 rounded text-slate-600 font-bold" style={{ background: "rgba(100,116,139,0.12)" }}>지하</span>}
-      </div>
+      {entry?.subway && (
+        <div className="flex flex-wrap gap-0.5 mt-0.5">
+          <span className="text-[8px] px-1 py-0.5 rounded text-slate-600 font-bold" style={{ background: "rgba(100,116,139,0.12)" }}>지하</span>
+        </div>
+      )}
 
       {!entry && (
         <div className="absolute inset-0 flex items-end justify-end p-2 opacity-0 hover:opacity-100 transition-opacity">
@@ -690,6 +674,10 @@ function buildCalendarCanvas(year, month, data) {
       ctx.beginPath();ctx.arc(cx+16,ty+13,3,0,Math.PI*2);ctx.fillStyle="#0ea5e9";ctx.fill();
       ctx.fillStyle="#0284c7";ctx.font=`700 9px ${FONT}`;ctx.fillText("AM",cx+22,ty+9);
       ctx.fillStyle="#0f172a";ctx.font=`800 10px ${FONT}`;ctx.fillText(`${e.amStart||""}~${e.amEnd||""}`,cx+22,ty+21);
+      // 팬스 태그 - AM 블록 우측
+      let ftx=cx+cw-8;
+      if(e?.amFenceRemove){ctx.font=`700 8px ${FONT}`;const tw=ctx.measureText("팬↓").width+6;ftx-=tw;drawRR(ctx,ftx,ty+5,tw,14,3);ctx.fillStyle="#ede9fe";ctx.fill();ctx.strokeStyle="#7c3aed50";ctx.lineWidth=.7;ctx.stroke();ctx.fillStyle="#7c3aed";ctx.fillText("팬↓",ftx+3,ty+14);ftx-=3;}
+      if(e?.amFenceSet){ctx.font=`700 8px ${FONT}`;const tw=ctx.measureText("팬↑").width+6;ftx-=tw;drawRR(ctx,ftx,ty+5,tw,14,3);ctx.fillStyle="#fef3c7";ctx.fill();ctx.strokeStyle="#d9770650";ctx.lineWidth=.7;ctx.stroke();ctx.fillStyle="#d97706";ctx.fillText("팬↑",ftx+3,ty+14);}
       ty+=31;
     }
     if(e?.pmGround||e?.pmSkating){
@@ -703,22 +691,12 @@ function buildCalendarCanvas(year, month, data) {
       ctx.fillText([e.pmGround?`G:${e.pmGround}`:"",e.pmSkating?`S:${e.pmSkating}`:""].filter(Boolean).join("  "),cx+22,ty+21);
       ty+=31;
     }
-    const tags=[];
-    if(e?.amFenceSet)    tags.push({label:"AM↑",color:"#d97706"});
-    if(e?.amFenceRemove) tags.push({label:"AM↓",color:"#7c3aed"});
-    if(e?.pmFenceSet)    tags.push({label:"PM↑",color:"#d97706"});
-    if(e?.pmFenceRemove) tags.push({label:"PM↓",color:"#7c3aed"});
-    if(e?.subway) tags.push({label:"지하",color:"#475569"});
-    if(tags.length){
-      let tx=cx+8;
-      tags.forEach(({label,color})=>{
-        ctx.font=`700 8px ${FONT}`;
-        const tw=ctx.measureText(label).width+8;
-        drawRR(ctx,tx,ty,tw,15,3);ctx.fillStyle=color+"18";ctx.fill();
-        ctx.strokeStyle=color+"50";ctx.lineWidth=.7;ctx.stroke();
-        ctx.fillStyle=color;ctx.fillText(label,tx+4,ty+10);
-        tx+=tw+3;
-      });
+    if(e?.subway){
+      ctx.font=`700 8px ${FONT}`;
+      const tw=ctx.measureText("지하").width+8;
+      drawRR(ctx,cx+8,ty,tw,15,3);ctx.fillStyle="#47556918";ctx.fill();
+      ctx.strokeStyle="#47556950";ctx.lineWidth=.7;ctx.stroke();
+      ctx.fillStyle="#475569";ctx.fillText("지하",cx+12,ty+10);
     }
   });
 
