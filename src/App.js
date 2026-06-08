@@ -78,6 +78,37 @@ const DownloadIcon = () => (
 const DAYS_KO = ["일", "월", "화", "수", "목", "금", "토"];
 const MONTHS_KO = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
 
+// ─── 공휴일 데이터 ──────────────────────────────────────────────────────────
+const FIXED_HOLIDAYS = {
+  "01-01": "신정",
+  "03-01": "삼일절",
+  "05-05": "어린이날",
+  "06-06": "현충일",
+  "08-15": "광복절",
+  "10-03": "개천절",
+  "10-09": "한글날",
+  "12-25": "성탄절",
+};
+const YEARLY_HOLIDAYS = {
+  "2024-02-09": "설 연휴", "2024-02-10": "설날", "2024-02-11": "설 연휴", "2024-02-12": "대체공휴일",
+  "2024-05-15": "부처님 오신 날",
+  "2024-09-16": "추석 연휴", "2024-09-17": "추석", "2024-09-18": "추석 연휴",
+  "2025-01-28": "설 연휴", "2025-01-29": "설날", "2025-01-30": "설 연휴",
+  "2025-05-05": "부처님 오신 날",
+  "2025-10-05": "추석 연휴", "2025-10-06": "추석", "2025-10-07": "추석 연휴", "2025-10-08": "대체공휴일",
+  "2026-02-16": "설 연휴", "2026-02-17": "설날", "2026-02-18": "설 연휴",
+  "2026-05-24": "부처님 오신 날",
+  "2026-09-23": "추석 연휴", "2026-09-24": "추석", "2026-09-25": "추석 연휴",
+  "2027-02-05": "설 연휴", "2027-02-06": "설날", "2027-02-07": "설 연휴",
+  "2027-05-13": "부처님 오신 날",
+  "2027-10-14": "추석 연휴", "2027-10-15": "추석", "2027-10-16": "추석 연휴",
+};
+function getHolidayName(year, month, day) {
+  const mm = String(month + 1).padStart(2, "0");
+  const dd = String(day).padStart(2, "0");
+  return YEARLY_HOLIDAYS[`${year}-${mm}-${dd}`] || FIXED_HOLIDAYS[`${mm}-${dd}`] || null;
+}
+
 function daysInMonth(year, month) { return new Date(year, month + 1, 0).getDate(); }
 function firstDayOfMonth(year, month) { return new Date(year, month, 1).getDay(); }
 function makeStorageKey(year, month) { return `skating_${year}_${month}`; }
@@ -442,13 +473,15 @@ function CalendarCell({ day, year, month, entry, isToday, onClick, bulkMode, isS
   const isRest = entry?.isRest;
   const hasAM = entry?.amStart || entry?.amEnd;
   const hasPM = entry?.pmGround || entry?.pmSkating;
+  const holidayName = getHolidayName(year, month, day);
+  const isRed = isSun || !!holidayName;
 
   return (
     <div onClick={() => onClick(day)}
          className="min-h-[90px] p-2 rounded-xl cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:z-10 relative select-none"
          style={{
-           background: isSelected ? "#dbeafe" : isRest ? "#fef2f2" : isEmpty ? "#f8fafc" : "#ffffff",
-           border: isSelected ? "1.5px solid #60a5fa" : isToday ? "1.5px solid #38bdf8" : "1px solid #e2e8f0",
+           background: isSelected ? "#dbeafe" : isRest ? "#fef2f2" : holidayName ? "#fff8f8" : isEmpty ? "#f8fafc" : "#ffffff",
+           border: isSelected ? "1.5px solid #60a5fa" : isToday ? "1.5px solid #38bdf8" : holidayName ? "1px solid #fecaca" : "1px solid #e2e8f0",
            boxShadow: isSelected ? "0 0 0 3px rgba(96,165,250,0.2)" : isToday ? "0 0 0 3px rgba(56,189,248,0.15)" : "0 1px 3px rgba(0,0,0,0.04)",
          }}>
       {bulkMode && (
@@ -457,9 +490,10 @@ function CalendarCell({ day, year, month, entry, isToday, onClick, bulkMode, isS
         </div>
       )}
       {/* Day number */}
-      <div className={`text-sm font-bold mb-1.5 ${isSun ? "text-red-500" : isSat ? "text-sky-500" : "text-slate-700"}`}>
+      <div className={`text-sm font-bold ${isRed ? "text-red-500" : isSat ? "text-sky-500" : "text-slate-700"}`}>
         {isToday ? <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs text-white" style={{ background: "linear-gradient(135deg,#38bdf8,#818cf8)" }}>{day}</span> : day}
       </div>
+      {holidayName && <div className="text-[8px] text-red-400 font-semibold truncate leading-tight mb-0.5">{holidayName}</div>}
       {entry?.note && <div className="text-[9px] text-amber-600 font-semibold mb-1 truncate">{entry.note}</div>}
 
       {isRest && (
@@ -639,12 +673,15 @@ function buildCalendarCanvas(year, month, data) {
     if(!day) return;
 
     // day number
-    ctx.textAlign="left"; ctx.fillStyle=isSun?"#ef4444":isSat?"#0284c7":"#1e293b";
+    const hName=getHolidayName(year,month,day);
+    const isHoliday=!!hName;
+    ctx.textAlign="left"; ctx.fillStyle=(isSun||isHoliday)?"#ef4444":isSat?"#0284c7":"#1e293b";
     ctx.font=`800 14px ${FONT}`; ctx.fillText(String(day),cx+9,cy+20);
-    if(e?.note){ctx.fillStyle="#d97706";ctx.font=`600 9px ${FONT}`;ctx.fillText(e.note,cx+28,cy+19);}
+    if(isHoliday){ctx.fillStyle="#f87171";ctx.font=`600 8px ${FONT}`;ctx.fillText(hName,cx+9,cy+30);}
+    if(e?.note){ctx.fillStyle="#d97706";ctx.font=`600 9px ${FONT}`;ctx.fillText(e.note,cx+(isHoliday?60:28),cy+19);}
     if(isRest){ctx.fillStyle="#ef4444";ctx.font=`700 12px ${FONT}`;ctx.textAlign="center";ctx.fillText("🏖 휴무일",cx+cw/2,cy+ch/2+4);ctx.textAlign="left";return;}
 
-    let ty=cy+34;
+    let ty=isHoliday?cy+38:cy+34;
     if(e?.amStart||e?.amEnd){
       const ag=ctx.createLinearGradient(cx+8,ty,cx+cw-8,ty);
       ag.addColorStop(0,"rgba(14,165,233,.14)"); ag.addColorStop(1,"rgba(14,165,233,.05)");
