@@ -830,9 +830,6 @@ export default function SkatingScheduleApp() {
   const cells = Array(firstDay).fill(null).concat(Array.from({ length: totalDays }, (_, i) => i + 1));
   while (cells.length % 7 !== 0) cells.push(null);
 
-  const fenceSetDays = Object.entries(data).filter(([,v]) => v?.fenceSet && !v?.isRest).map(([k]) => Number(k));
-  const fenceRemoveDays = Object.entries(data).filter(([,v]) => v?.fenceRemove && !v?.isRest).map(([k]) => Number(k));
-  const restDays = Object.entries(data).filter(([,v]) => v?.isRest).map(([k]) => Number(k));
 
   const isToday = (d) => today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
 
@@ -908,22 +905,6 @@ export default function SkatingScheduleApp() {
           </button>
         </div>
 
-        {/* Stats bar */}
-        <div className="grid grid-cols-3 gap-3 mb-5">
-          {[
-            { label:"팬스 치기", count:fenceSetDays.length, color:"amber" },
-            { label:"팬스 걷기", count:fenceRemoveDays.length, color:"purple" },
-            { label:"휴무일",    count:restDays.length,       color:"red" },
-          ].map(({ label, count, color }) => {
-            const cols = { amber:"from-amber-500/20 to-amber-500/5 border-amber-500/20 text-amber-300", purple:"from-purple-500/20 to-purple-500/5 border-purple-500/20 text-purple-300", red:"from-red-500/20 to-red-500/5 border-red-500/20 text-red-300" };
-            return (
-              <div key={label} className={`p-3 rounded-xl bg-gradient-to-br ${cols[color]} border text-center`}>
-                <div className="text-xl font-black">{count}</div>
-                <div className="text-[10px] font-medium opacity-80">{label}</div>
-              </div>
-            );
-          })}
-        </div>
 
         {/* Legend */}
         <div className="flex flex-wrap gap-3 mb-4 text-[10px]">
