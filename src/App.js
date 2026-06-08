@@ -260,7 +260,7 @@ function EditModal({ year, month, day, entry, onSave, onClose }) {
                   <div key={k}>
                     <label className="block text-xs text-slate-500 mb-1">{i===0?"시작":"종료"}</label>
                     <input value={form[k]} onChange={e => set(k, e.target.value)}
-                      placeholder="예: 7:00"
+                      placeholder="예: 7 또는 7:30"
                       className="w-full px-3 py-2 rounded-lg text-sm text-white placeholder-slate-600 outline-none focus:ring-1 focus:ring-sky-500"
                       style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}/>
                   </div>
