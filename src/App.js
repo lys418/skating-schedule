@@ -386,6 +386,12 @@ function DetailModal({ year, month, day, entry, onEdit, onClose }) {
             </div>
           ) : (
             <>
+              {entry.subway && (
+                <div className="flex">
+                  <Pill color="slate"><SubwayIcon/>지하 (B1↓)</Pill>
+                </div>
+              )}
+
               {hasAM && (
                 <div className="p-4 rounded-xl" style={{ background: "#eff6ff", border: "1px solid #bfdbfe" }}>
                   <div className="text-xs font-bold text-sky-600 uppercase tracking-widest mb-3 flex items-center gap-1.5"><IceBlade/>AM 스케이팅</div>
@@ -401,8 +407,8 @@ function DetailModal({ year, month, day, entry, onEdit, onClose }) {
                     </div>
                     {(entry.amFenceSet || entry.amFenceRemove) && (
                       <div className="flex flex-col gap-1 ml-1">
-                        {entry.amFenceSet    && <Pill color="amber"><FenceIcon/>치기</Pill>}
-                        {entry.amFenceRemove && <Pill color="purple"><WalkIcon/>걷기</Pill>}
+                        {entry.amFenceSet    && <Pill color="amber">▥ 치기</Pill>}
+                        {entry.amFenceRemove && <Pill color="purple">▤ 걷기</Pill>}
                       </div>
                     )}
                   </div>
@@ -422,12 +428,6 @@ function DetailModal({ year, month, day, entry, onEdit, onClose }) {
                       <div className="text-lg font-bold text-emerald-700">{entry.pmSkating || "—"}</div>
                     </div>
                   </div>
-                </div>
-              )}
-
-              {entry.subway && (
-                <div className="flex flex-wrap gap-2">
-                  <Pill color="slate"><SubwayIcon/>지하 (B1↓)</Pill>
                 </div>
               )}
             </>
@@ -488,12 +488,18 @@ function CalendarCell({ day, year, month, entry, isToday, onClick, bulkMode, isS
         </div>
       )}
 
+      {!isRest && entry?.subway && (
+        <div className="mb-0.5">
+          <span className="text-[8px] px-1 py-0.5 rounded text-slate-600 font-bold" style={{ background: "rgba(100,116,139,0.12)" }}>지하</span>
+        </div>
+      )}
+
       {!isRest && hasAM && (
         <div className="flex items-center gap-1 mb-0.5 flex-wrap">
           <div className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0"/>
           <span className="text-[9px] text-sky-600 font-medium">{entry.amStart}~{entry.amEnd}</span>
-          {entry?.amFenceSet    && <span className="text-[8px] px-1 py-0.5 rounded text-amber-700 font-bold" style={{ background: "rgba(245,158,11,0.15)" }}>팬↑</span>}
-          {entry?.amFenceRemove && <span className="text-[8px] px-1 py-0.5 rounded text-purple-700 font-bold" style={{ background: "rgba(139,92,246,0.12)" }}>팬↓</span>}
+          {entry?.amFenceSet    && <span className="text-[9px] text-amber-600 font-bold">▥</span>}
+          {entry?.amFenceRemove && <span className="text-[9px] text-purple-600 font-bold">▤</span>}
         </div>
       )}
 
@@ -501,12 +507,6 @@ function CalendarCell({ day, year, month, entry, isToday, onClick, bulkMode, isS
         <div className="flex items-center gap-1 mb-0.5">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"/>
           <span className="text-[9px] text-emerald-700 truncate">PM {entry.pmGround}/{entry.pmSkating}</span>
-        </div>
-      )}
-
-      {entry?.subway && (
-        <div className="flex flex-wrap gap-0.5 mt-0.5">
-          <span className="text-[8px] px-1 py-0.5 rounded text-slate-600 font-bold" style={{ background: "rgba(100,116,139,0.12)" }}>지하</span>
         </div>
       )}
 
@@ -666,6 +666,15 @@ function buildCalendarCanvas(year, month, data) {
     if(isRest){ctx.fillStyle="#ef4444";ctx.font=`700 12px ${FONT}`;ctx.textAlign="center";ctx.fillText("🏖 휴무일",cx+cw/2,cy+ch/2+4);ctx.textAlign="left";return;}
 
     let ty=isHoliday?cy+38:cy+34;
+    // 지하 뱃지 — AM 위에
+    if(e?.subway){
+      ctx.font=`700 8px ${FONT}`;
+      const sw=ctx.measureText("지하").width+8;
+      drawRR(ctx,cx+8,ty,sw,14,3);ctx.fillStyle="#f1f5f9";ctx.fill();
+      ctx.strokeStyle="#47556940";ctx.lineWidth=.7;ctx.stroke();
+      ctx.fillStyle="#475569";ctx.fillText("지하",cx+12,ty+10);
+      ty+=18;
+    }
     if(e?.amStart||e?.amEnd){
       const ag=ctx.createLinearGradient(cx+8,ty,cx+cw-8,ty);
       ag.addColorStop(0,"rgba(14,165,233,.14)"); ag.addColorStop(1,"rgba(14,165,233,.05)");
@@ -674,10 +683,10 @@ function buildCalendarCanvas(year, month, data) {
       ctx.beginPath();ctx.arc(cx+16,ty+13,3,0,Math.PI*2);ctx.fillStyle="#0ea5e9";ctx.fill();
       ctx.fillStyle="#0284c7";ctx.font=`700 9px ${FONT}`;ctx.fillText("AM",cx+22,ty+9);
       ctx.fillStyle="#0f172a";ctx.font=`800 10px ${FONT}`;ctx.fillText(`${e.amStart||""}~${e.amEnd||""}`,cx+22,ty+21);
-      // 팬스 태그 - AM 블록 우측
+      // 팬스 기호 — AM 블록 우측
       let ftx=cx+cw-8;
-      if(e?.amFenceRemove){ctx.font=`700 8px ${FONT}`;const tw=ctx.measureText("팬↓").width+6;ftx-=tw;drawRR(ctx,ftx,ty+5,tw,14,3);ctx.fillStyle="#ede9fe";ctx.fill();ctx.strokeStyle="#7c3aed50";ctx.lineWidth=.7;ctx.stroke();ctx.fillStyle="#7c3aed";ctx.fillText("팬↓",ftx+3,ty+14);ftx-=3;}
-      if(e?.amFenceSet){ctx.font=`700 8px ${FONT}`;const tw=ctx.measureText("팬↑").width+6;ftx-=tw;drawRR(ctx,ftx,ty+5,tw,14,3);ctx.fillStyle="#fef3c7";ctx.fill();ctx.strokeStyle="#d9770650";ctx.lineWidth=.7;ctx.stroke();ctx.fillStyle="#d97706";ctx.fillText("팬↑",ftx+3,ty+14);}
+      if(e?.amFenceRemove){ctx.font=`800 11px ${FONT}`;const tw=ctx.measureText("▤").width+6;ftx-=tw;drawRR(ctx,ftx,ty+4,tw,16,3);ctx.fillStyle="#ede9fe";ctx.fill();ctx.strokeStyle="#7c3aed50";ctx.lineWidth=.7;ctx.stroke();ctx.fillStyle="#7c3aed";ctx.fillText("▤",ftx+3,ty+15);ftx-=3;}
+      if(e?.amFenceSet){ctx.font=`800 11px ${FONT}`;const tw=ctx.measureText("▥").width+6;ftx-=tw;drawRR(ctx,ftx,ty+4,tw,16,3);ctx.fillStyle="#fef3c7";ctx.fill();ctx.strokeStyle="#d9770650";ctx.lineWidth=.7;ctx.stroke();ctx.fillStyle="#d97706";ctx.fillText("▥",ftx+3,ty+15);}
       ty+=31;
     }
     if(e?.pmGround||e?.pmSkating){
@@ -690,13 +699,6 @@ function buildCalendarCanvas(year, month, data) {
       ctx.fillStyle="#0f172a";ctx.font=`800 10px ${FONT}`;
       ctx.fillText([e.pmGround?`G:${e.pmGround}`:"",e.pmSkating?`S:${e.pmSkating}`:""].filter(Boolean).join("  "),cx+22,ty+21);
       ty+=31;
-    }
-    if(e?.subway){
-      ctx.font=`700 8px ${FONT}`;
-      const tw=ctx.measureText("지하").width+8;
-      drawRR(ctx,cx+8,ty,tw,15,3);ctx.fillStyle="#47556918";ctx.fill();
-      ctx.strokeStyle="#47556950";ctx.lineWidth=.7;ctx.stroke();
-      ctx.fillStyle="#475569";ctx.fillText("지하",cx+12,ty+10);
     }
   });
 
