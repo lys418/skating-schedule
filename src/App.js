@@ -423,7 +423,7 @@ function DetailModal({ year, month, day, entry, onEdit, onClose }) {
 }
 
 // ─── Calendar Cell ─────────────────────────────────────────────────────────
-function CalendarCell({ day, year, month, entry, isToday, onClick }) {
+function CalendarCell({ day, year, month, entry, isToday, onClick, bulkMode, isSelected }) {
   if (!day) return <div className="min-h-[90px]"/>;
 
   const date = new Date(year, month, day);
@@ -439,10 +439,15 @@ function CalendarCell({ day, year, month, entry, isToday, onClick }) {
     <div onClick={() => onClick(day)}
          className="min-h-[90px] p-2 rounded-xl cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:z-10 relative select-none"
          style={{
-           background: isRest ? "rgba(239,68,68,0.07)" : isEmpty ? "rgba(255,255,255,0.02)" : "rgba(56,189,248,0.04)",
-           border: isToday ? "1.5px solid rgba(56,189,248,0.6)" : "1px solid rgba(255,255,255,0.06)",
-           boxShadow: isToday ? "0 0 12px rgba(56,189,248,0.2)" : "none",
+           background: isSelected ? "rgba(56,189,248,0.12)" : isRest ? "rgba(239,68,68,0.07)" : isEmpty ? "rgba(255,255,255,0.02)" : "rgba(56,189,248,0.04)",
+           border: isSelected ? "1.5px solid rgba(56,189,248,0.7)" : isToday ? "1.5px solid rgba(56,189,248,0.6)" : "1px solid rgba(255,255,255,0.06)",
+           boxShadow: isSelected ? "0 0 12px rgba(56,189,248,0.3)" : isToday ? "0 0 12px rgba(56,189,248,0.2)" : "none",
          }}>
+      {bulkMode && (
+        <div className={`absolute top-1.5 right-1.5 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? "bg-sky-500 border-sky-500" : "border-slate-500 bg-slate-800/60"}`}>
+          {isSelected && <svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.5"><polyline points="2,6 5,9 10,3"/></svg>}
+        </div>
+      )}
       {/* Day number */}
       <div className={`text-sm font-bold mb-1.5 ${isSun ? "text-red-400" : isSat ? "text-sky-400" : "text-slate-200"}`}>
         {isToday ? <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs text-white" style={{ background: "linear-gradient(135deg,#38bdf8,#818cf8)" }}>{day}</span> : day}
@@ -784,6 +789,9 @@ export default function SkatingScheduleApp() {
   const [editDay, setEditDay] = useState(null);
   const [isNewEdit, setIsNewEdit] = useState(false);
   const [syncStatus, setSyncStatus] = useState(supabase ? 'idle' : 'offline');
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkSelected, setBulkSelected] = useState(new Set());
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
 
   useEffect(() => {
     const local = loadMonthData(year, month);
@@ -802,6 +810,21 @@ export default function SkatingScheduleApp() {
       }
     });
   }, [year, month]);
+
+  const saveBulkEntries = (entry) => {
+    const next = { ...data };
+    [...bulkSelected].forEach(day => { next[day] = { ...entry }; });
+    setData(next);
+    saveMonthData(year, month, next);
+    if (supabase) {
+      setSyncStatus('syncing');
+      Promise.all([...bulkSelected].map(day => upsertDayToSupabase(year, month, day, entry)))
+        .then(results => setSyncStatus(results.every(Boolean) ? 'synced' : 'error'));
+    }
+    setBulkMode(false);
+    setBulkSelected(new Set());
+    setBulkEditOpen(false);
+  };
 
   const saveEntry = (day, entry) => {
     const next = { ...data, [day]: entry };
@@ -879,6 +902,13 @@ export default function SkatingScheduleApp() {
             style={{ background:"linear-gradient(135deg,rgba(56,189,248,.2),rgba(139,92,246,.15))", border:"1px solid rgba(56,189,248,.3)" }}>
             <DownloadIcon/>이미지 저장
           </button>
+          <button onClick={() => { setBulkMode(b => !b); setBulkSelected(new Set()); }}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all hover:opacity-90"
+            style={bulkMode
+              ? { background:"linear-gradient(135deg,rgba(56,189,248,.4),rgba(129,140,248,.3))", border:"1px solid rgba(56,189,248,.6)", color:"#fff" }
+              : { background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.12)", color:"#94a3b8" }}>
+            <PlusIcon/>{bulkMode ? "선택 취소" : "다중 선택"}
+          </button>
         </div>
 
         {/* Month nav */}
@@ -940,9 +970,19 @@ export default function SkatingScheduleApp() {
               <CalendarCell key={idx} day={day} year={year} month={month}
                 entry={day ? data[day] : null}
                 isToday={day ? isToday(day) : false}
+                bulkMode={bulkMode}
+                isSelected={day ? bulkSelected.has(day) : false}
                 onClick={(d) => {
-                  if (data[d]) setSelectedDay(d);
-                  else { setEditDay(d); setIsNewEdit(true); }
+                  if (bulkMode) {
+                    setBulkSelected(prev => {
+                      const next = new Set(prev);
+                      if (next.has(d)) next.delete(d); else next.add(d);
+                      return next;
+                    });
+                  } else {
+                    if (data[d]) setSelectedDay(d);
+                    else { setEditDay(d); setIsNewEdit(true); }
+                  }
                 }}/>
             ))}
           </div>
@@ -950,9 +990,34 @@ export default function SkatingScheduleApp() {
 
         {/* Add note */}
         <div className="mt-4 text-center text-xs text-slate-600">
-          날짜를 탭하면 상세보기 · 빈 날짜를 탭하면 바로 입력
+          {bulkMode ? "날짜를 탭해서 선택 · 다시 탭하면 해제" : "날짜를 탭하면 상세보기 · 빈 날짜를 탭하면 바로 입력"}
         </div>
       </div>
+
+      {/* Bulk mode bottom bar */}
+      {bulkMode && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 px-4 py-4"
+             style={{ background:"linear-gradient(to top,rgba(2,8,23,0.97),rgba(2,8,23,0.85))", backdropFilter:"blur(10px)", borderTop:"1px solid rgba(56,189,248,0.2)" }}>
+          <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
+            <span className="text-sm text-slate-400">
+              <span className="text-sky-400 font-bold text-base">{bulkSelected.size}</span>개 날짜 선택됨
+            </span>
+            <div className="flex gap-2">
+              <button onClick={() => setBulkSelected(new Set())}
+                className="px-4 py-2 rounded-xl text-sm text-slate-400 hover:text-white transition-colors"
+                style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)" }}>
+                선택 해제
+              </button>
+              <button onClick={() => { if (bulkSelected.size > 0) setBulkEditOpen(true); }}
+                disabled={bulkSelected.size === 0}
+                className="px-5 py-2 rounded-xl text-sm font-bold text-white transition-all"
+                style={{ background: bulkSelected.size > 0 ? "linear-gradient(135deg,#38bdf8,#818cf8)" : "rgba(56,189,248,0.2)", opacity: bulkSelected.size > 0 ? 1 : 0.5 }}>
+                {bulkSelected.size}개 날짜에 일정 등록
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Detail Modal */}
       {selectedDay && !editDay && (
@@ -967,6 +1032,14 @@ export default function SkatingScheduleApp() {
           entry={data[editDay] || defaultEntry()}
           onSave={(form) => saveEntry(editDay, form)}
           onClose={() => { setEditDay(null); if (isNewEdit) setSelectedDay(null); else setSelectedDay(editDay); }}/>
+      )}
+
+      {/* Bulk Edit Modal */}
+      {bulkEditOpen && (
+        <EditModal year={year} month={month} day={[...bulkSelected].sort((a,b)=>a-b)[0]}
+          entry={defaultEntry()}
+          onSave={(form) => saveBulkEntries(form)}
+          onClose={() => setBulkEditOpen(false)}/>
       )}
 
     </div>
