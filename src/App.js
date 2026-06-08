@@ -92,8 +92,9 @@ function makeStorageKey(year, month) {
 
 // ─── Default entry ─────────────────────────────────────────────────────────
 const defaultEntry = () => ({
-  amStart: "", amEnd: "", fenceSet: false, fenceRemove: false,
-  pmGround: "", pmSkating: "", isRest: false, subway: false, note: ""
+  amStart: "", amEnd: "", amFenceSet: false, amFenceRemove: false,
+  pmGround: "", pmSkating: "", pmFenceSet: false, pmFenceRemove: false,
+  isRest: false, subway: false, note: ""
 });
 
 // ─── Storage ───────────────────────────────────────────────────────────────
@@ -123,15 +124,17 @@ async function fetchMonthFromSupabase(year, month) {
     const result = {};
     for (const row of data) {
       result[row.day] = {
-        amStart:     row.am_start     ?? '',
-        amEnd:       row.am_end       ?? '',
-        fenceSet:    row.fence_set    ?? false,
-        fenceRemove: row.fence_remove ?? false,
-        pmGround:    row.pm_ground    ?? '',
-        pmSkating:   row.pm_skating   ?? '',
-        isRest:      row.is_rest      ?? false,
-        subway:      row.subway       ?? false,
-        note:        row.note         ?? '',
+        amStart:      row.am_start       ?? '',
+        amEnd:        row.am_end         ?? '',
+        amFenceSet:   row.am_fence_set   ?? row.fence_set   ?? false,
+        amFenceRemove:row.am_fence_remove?? row.fence_remove?? false,
+        pmGround:     row.pm_ground      ?? '',
+        pmSkating:    row.pm_skating     ?? '',
+        pmFenceSet:   row.pm_fence_set   ?? false,
+        pmFenceRemove:row.pm_fence_remove?? false,
+        isRest:       row.is_rest        ?? false,
+        subway:       row.subway         ?? false,
+        note:         row.note           ?? '',
       };
     }
     return result;
@@ -147,15 +150,17 @@ async function upsertDayToSupabase(year, month, day, entry) {
     const { error } = await supabase.from('schedules').upsert(
       {
         year, month: month + 1, day,
-        am_start:     entry.amStart,
-        am_end:       entry.amEnd,
-        fence_set:    entry.fenceSet,
-        fence_remove: entry.fenceRemove,
-        pm_ground:    entry.pmGround,
-        pm_skating:   entry.pmSkating,
-        is_rest:      entry.isRest,
-        subway:       !!entry.subway,
-        note:         entry.note,
+        am_start:        entry.amStart,
+        am_end:          entry.amEnd,
+        am_fence_set:    entry.amFenceSet,
+        am_fence_remove: entry.amFenceRemove,
+        pm_ground:       entry.pmGround,
+        pm_skating:      entry.pmSkating,
+        pm_fence_set:    entry.pmFenceSet,
+        pm_fence_remove: entry.pmFenceRemove,
+        is_rest:         entry.isRest,
+        subway:          !!entry.subway,
+        note:            entry.note,
       },
       { onConflict: 'year,month,day' }
     );
@@ -266,6 +271,18 @@ function EditModal({ year, month, day, entry, onSave, onClose }) {
                   </div>
                 ))}
               </div>
+              <div className="flex gap-2">
+                {[{key:"amFenceSet",label:"팬스 치기",Icon:FenceIcon},{key:"amFenceRemove",label:"팬스 걷기",Icon:WalkIcon}].map(({key,label,Icon})=>(
+                  <label key={key} className="flex items-center gap-2 flex-1 p-2 rounded-lg cursor-pointer select-none"
+                         style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}>
+                    <input type="checkbox" checked={!!form[key]} onChange={e=>set(key,e.target.checked)} className="hidden"/>
+                    <div className={`w-4 h-4 rounded flex items-center justify-center transition-all ${form[key]?"bg-sky-500":"border border-slate-600"}`}>
+                      {form[key]&&<svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.5"><polyline points="2,6 5,9 10,3"/></svg>}
+                    </div>
+                    <span className={`flex items-center gap-1 text-xs font-medium ${form[key]?"text-white":"text-slate-500"}`}><Icon/>{label}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             {/* PM */}
@@ -287,27 +304,29 @@ function EditModal({ year, month, day, entry, onSave, onClose }) {
                     style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}/>
                 </div>
               </div>
+              <div className="flex gap-2">
+                {[{key:"pmFenceSet",label:"팬스 치기",Icon:FenceIcon},{key:"pmFenceRemove",label:"팬스 걷기",Icon:WalkIcon}].map(({key,label,Icon})=>(
+                  <label key={key} className="flex items-center gap-2 flex-1 p-2 rounded-lg cursor-pointer select-none"
+                         style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}>
+                    <input type="checkbox" checked={!!form[key]} onChange={e=>set(key,e.target.checked)} className="hidden"/>
+                    <div className={`w-4 h-4 rounded flex items-center justify-center transition-all ${form[key]?"bg-emerald-500":"border border-slate-600"}`}>
+                      {form[key]&&<svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.5"><polyline points="2,6 5,9 10,3"/></svg>}
+                    </div>
+                    <span className={`flex items-center gap-1 text-xs font-medium ${form[key]?"text-white":"text-slate-500"}`}><Icon/>{label}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
-            {/* Fence & Subway */}
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { key:"fenceSet",    label:"팬스 치기",  color:"amber",  Icon:FenceIcon },
-                { key:"fenceRemove", label:"팬스 걷기",  color:"purple", Icon:WalkIcon },
-                { key:"subway",      label:"지하 (B1↓)", color:"slate",  Icon:SubwayIcon },
-              ].map(({ key, label, color, Icon }) => (
-                <label key={key} className="flex items-center gap-2 p-3 rounded-xl cursor-pointer select-none"
-                       style={{ background: `rgba(255,255,255,0.04)`, border: "1px solid rgba(255,255,255,0.08)" }}>
-                  <input type="checkbox" checked={!!form[key]} onChange={e => set(key, e.target.checked)} className="hidden"/>
-                  <div className={`w-4 h-4 rounded flex items-center justify-center transition-all ${form[key] ? "bg-sky-500" : "border border-slate-600"}`}>
-                    {form[key] && <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.5"><polyline points="2,6 5,9 10,3"/></svg>}
-                  </div>
-                  <div className={`flex items-center gap-1 text-xs font-medium ${form[key] ? "text-white" : "text-slate-500"}`}>
-                    <Icon/>{label}
-                  </div>
-                </label>
-              ))}
-            </div>
+            {/* Subway */}
+            <label className="flex items-center gap-2 p-3 rounded-xl cursor-pointer select-none"
+                   style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}>
+              <input type="checkbox" checked={!!form.subway} onChange={e=>set("subway",e.target.checked)} className="hidden"/>
+              <div className={`w-4 h-4 rounded flex items-center justify-center transition-all ${form.subway?"bg-sky-500":"border border-slate-600"}`}>
+                {form.subway&&<svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.5"><polyline points="2,6 5,9 10,3"/></svg>}
+              </div>
+              <span className={`flex items-center gap-1 text-xs font-medium ${form.subway?"text-white":"text-slate-500"}`}><SubwayIcon/>지하 (B1↓)</span>
+            </label>
           </>}
         </div>
 
@@ -379,6 +398,12 @@ function DetailModal({ year, month, day, entry, onEdit, onClose }) {
                       <div className="text-2xl font-black text-sky-300">{entry.amEnd || "—"}</div>
                     </div>
                   </div>
+                  {(entry.amFenceSet || entry.amFenceRemove) && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {entry.amFenceSet    && <Pill color="amber"><FenceIcon/>팬스 치기</Pill>}
+                      {entry.amFenceRemove && <Pill color="purple"><WalkIcon/>팬스 걷기</Pill>}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -395,17 +420,20 @@ function DetailModal({ year, month, day, entry, onEdit, onClose }) {
                       <div className="text-lg font-bold text-emerald-300">{entry.pmSkating || "—"}</div>
                     </div>
                   </div>
+                  {(entry.pmFenceSet || entry.pmFenceRemove) && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {entry.pmFenceSet    && <Pill color="amber"><FenceIcon/>팬스 치기</Pill>}
+                      {entry.pmFenceRemove && <Pill color="purple"><WalkIcon/>팬스 걷기</Pill>}
+                    </div>
+                  )}
                 </div>
               )}
 
-              <div className="flex flex-wrap gap-2">
-                {entry.fenceSet    && <Pill color="amber"><FenceIcon/>팬스 치기</Pill>}
-                {entry.fenceRemove && <Pill color="purple"><WalkIcon/>팬스 걷기</Pill>}
-                {entry.subway      && <Pill color="slate"><SubwayIcon/>지하 (B1↓)</Pill>}
-                {!entry.fenceSet && !entry.fenceRemove && !entry.subway && (
-                  <span className="text-xs text-slate-600">팬스/지하 정보 없음</span>
-                )}
-              </div>
+              {entry.subway && (
+                <div className="flex flex-wrap gap-2">
+                  <Pill color="slate"><SubwayIcon/>지하 (B1↓)</Pill>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -477,9 +505,11 @@ function CalendarCell({ day, year, month, entry, isToday, onClick, bulkMode, isS
 
       {/* badges */}
       <div className="flex flex-wrap gap-0.5 mt-1">
-        {entry?.fenceSet    && <span className="text-[8px] px-1 py-0.5 rounded text-amber-300 font-bold" style={{ background: "rgba(245,158,11,0.15)" }}>팬스↑</span>}
-        {entry?.fenceRemove && <span className="text-[8px] px-1 py-0.5 rounded text-purple-300 font-bold" style={{ background: "rgba(139,92,246,0.15)" }}>팬스↓</span>}
-        {entry?.subway      && <span className="text-[8px] px-1 py-0.5 rounded text-slate-300 font-bold" style={{ background: "rgba(148,163,184,0.15)" }}>지하</span>}
+        {entry?.amFenceSet    && <span className="text-[8px] px-1 py-0.5 rounded text-amber-300 font-bold" style={{ background: "rgba(245,158,11,0.15)" }}>AM↑</span>}
+        {entry?.amFenceRemove && <span className="text-[8px] px-1 py-0.5 rounded text-purple-300 font-bold" style={{ background: "rgba(139,92,246,0.15)" }}>AM↓</span>}
+        {entry?.pmFenceSet    && <span className="text-[8px] px-1 py-0.5 rounded text-amber-300 font-bold" style={{ background: "rgba(245,158,11,0.20)" }}>PM↑</span>}
+        {entry?.pmFenceRemove && <span className="text-[8px] px-1 py-0.5 rounded text-purple-300 font-bold" style={{ background: "rgba(139,92,246,0.20)" }}>PM↓</span>}
+        {entry?.subway        && <span className="text-[8px] px-1 py-0.5 rounded text-slate-300 font-bold" style={{ background: "rgba(148,163,184,0.15)" }}>지하</span>}
       </div>
 
       {!entry && (
@@ -584,8 +614,8 @@ function buildCalendarCanvas(year, month, data) {
   // stats
   const SY=PAD+HDR_H, SW=(W-PAD*2-20)/3;
   const STATS=[
-    {label:"팬스 치기",count:Object.values(data).filter(v=>v?.fenceSet&&!v?.isRest).length,c1:"rgba(245,158,11,.22)",c2:"rgba(245,158,11,.05)",bc:"rgba(245,158,11,.3)",tc:"#fbbf24"},
-    {label:"팬스 걷기",count:Object.values(data).filter(v=>v?.fenceRemove&&!v?.isRest).length,c1:"rgba(167,139,250,.22)",c2:"rgba(167,139,250,.05)",bc:"rgba(167,139,250,.3)",tc:"#c4b5fd"},
+    {label:"팬스 치기",count:Object.values(data).filter(v=>!v?.isRest&&(v?.amFenceSet||v?.pmFenceSet)).length,c1:"rgba(245,158,11,.22)",c2:"rgba(245,158,11,.05)",bc:"rgba(245,158,11,.3)",tc:"#fbbf24"},
+    {label:"팬스 걷기",count:Object.values(data).filter(v=>!v?.isRest&&(v?.amFenceRemove||v?.pmFenceRemove)).length,c1:"rgba(167,139,250,.22)",c2:"rgba(167,139,250,.05)",bc:"rgba(167,139,250,.3)",tc:"#c4b5fd"},
     {label:"휴무일",count:Object.values(data).filter(v=>v?.isRest).length,c1:"rgba(239,68,68,.22)",c2:"rgba(239,68,68,.05)",bc:"rgba(239,68,68,.3)",tc:"#fca5a5"},
   ];
   STATS.forEach(({label,count,c1,c2,bc,tc},i)=>{
@@ -672,8 +702,10 @@ function buildCalendarCanvas(year, month, data) {
       ty+=31;
     }
     const tags=[];
-    if(e?.fenceSet) tags.push({label:"팬스↑",color:"#f59e0b"});
-    if(e?.fenceRemove) tags.push({label:"팬스↓",color:"#a78bfa"});
+    if(e?.amFenceSet)    tags.push({label:"AM↑",color:"#f59e0b"});
+    if(e?.amFenceRemove) tags.push({label:"AM↓",color:"#a78bfa"});
+    if(e?.pmFenceSet)    tags.push({label:"PM↑",color:"#f59e0b"});
+    if(e?.pmFenceRemove) tags.push({label:"PM↓",color:"#a78bfa"});
     if(e?.subway) tags.push({label:"지하",color:"#94a3b8"});
     if(tags.length){
       let tx=cx+8;
