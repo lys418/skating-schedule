@@ -119,7 +119,7 @@ async function fetchMonthFromSupabase(year, month) {
       .select('*')
       .eq('year', year)
       .eq('month', month + 1);
-    if (error) return null;
+    if (error) { console.error('[SB fetch]', error); return null; }
     const result = {};
     for (const row of data) {
       result[row.day] = {
@@ -135,7 +135,8 @@ async function fetchMonthFromSupabase(year, month) {
       };
     }
     return result;
-  } catch {
+  } catch(e) {
+    console.error('[SB fetch exception]', e);
     return null;
   }
 }
