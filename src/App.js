@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from './supabaseClient';
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -548,7 +548,7 @@ function drawRR(ctx, x, y, w, h, r) {
 }
 
 function buildCalendarCanvas(year, month, data) {
-  const SC=2, W=1200, PAD=44;
+  const SC=4, W=1200, PAD=44;
   const COL_W=(W-PAD*2)/7;
   const HDR_H=130, STATS_H=68, LEG_H=38, DAYH_H=34, CELL_H=128;
   const totalDays=new Date(year,month+1,0).getDate();
@@ -729,84 +729,35 @@ function buildCalendarCanvas(year, month, data) {
   return cvs;
 }
 
-// ─── Download Modal ─────────────────────────────────────────────────────────
-function DownloadModal({ year, month, data, onClose }) {
-  const [imgUrl, setImgUrl] = useState(null);
-  const [busy, setBusy] = useState(true);
+// ─── 이미지 새 창 열기 ──────────────────────────────────────────────────────
+function openCalendarImage(year, month, data) {
   const fname = `장호성쇼트트랙팀_${year}년${MONTHS_KO[month]}_훈련일정.jpg`;
-
-  useEffect(() => {
-    setBusy(true);
-    const t = setTimeout(() => {
-      try { setImgUrl(buildCalendarCanvas(year, month, data).toDataURL("image/jpeg", 0.95)); }
-      catch(e) { console.error(e); }
-      setBusy(false);
-    }, 120);
-    return () => clearTimeout(t);
-  }, [year, month, data]);
-
-  const handleSave = useCallback(() => {
-    if (!imgUrl) return;
-    try {
-      const arr = Uint8Array.from(atob(imgUrl.split(",")[1]), c => c.charCodeAt(0));
-      const url = URL.createObjectURL(new Blob([arr], { type:"image/jpeg" }));
-      const a = Object.assign(document.createElement("a"), { href:url, download:fname });
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 1500);
-    } catch {
-      const w = window.open("","_blank");
-      if (w) { w.document.write(`<html><body style="margin:0;background:#f0f6ff"><img src="${imgUrl}" style="width:100%"></body></html>`); w.document.close(); }
-    }
-  }, [imgUrl, fname]);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-         style={{ background:"rgba(15,23,42,0.55)", backdropFilter:"blur(6px)" }}
-         onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="w-full max-w-xl rounded-2xl overflow-hidden flex flex-col shadow-2xl"
-           style={{ maxHeight:"88vh", background:"#ffffff", border:"1px solid #e2e8f0" }}>
-
-        <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
-             style={{ background:"#f8fafc", borderBottom:"1px solid #e2e8f0" }}>
-          <div>
-            <div className="text-[10px] text-slate-400 uppercase tracking-widest">이미지 저장</div>
-            <div className="text-base font-bold text-slate-800 mt-0.5">{year}년 {MONTHS_KO[month]} 훈련 일정표</div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button onClick={handleSave} disabled={busy||!imgUrl}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity"
-                    style={{ background: busy||!imgUrl ? "rgba(56,189,248,0.4)" : "linear-gradient(135deg,#38bdf8,#818cf8)",
-                      border:"none", opacity: busy||!imgUrl ? 0.6 : 1, cursor: busy||!imgUrl ? "not-allowed":"pointer" }}>
-              <DownloadIcon/>저장하기
-            </button>
-            <button onClick={onClose}
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all">
-              <CloseIcon/>
-            </button>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4" style={{ background:"#f0f6ff" }}>
-          {busy ? (
-            <div className="flex flex-col items-center justify-center gap-4 py-16 text-slate-400">
-              <div className="w-10 h-10 rounded-full border-2 border-sky-300 border-t-sky-500"
-                   style={{ animation:"spin 0.8s linear infinite" }}/>
-              <span className="text-sm font-medium">이미지 생성 중…</span>
-            </div>
-          ) : imgUrl ? (
-            <a href={imgUrl} download={fname}
-               className="block rounded-xl overflow-hidden"
-               style={{ border:"2px solid #bfdbfe", boxShadow:"0 4px 20px rgba(0,0,0,0.1)" }}>
-              <img src={imgUrl} alt={fname} className="w-full block"
-                   style={{ WebkitTouchCallout:"default", userSelect:"none", WebkitUserSelect:"none" }}/>
-            </a>
-          ) : (
-            <p className="text-center text-red-500 text-sm py-10">이미지 생성 실패</p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  const imgUrl = buildCalendarCanvas(year, month, data).toDataURL("image/jpeg", 0.97);
+  const w = window.open("", "_blank");
+  if (!w) return;
+  w.document.write(`<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${fname}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#f0f6ff;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px;font-family:'Malgun Gothic',sans-serif}
+  .tip{background:#fff;border:1px solid #bfdbfe;border-radius:14px;padding:14px 20px;margin-bottom:18px;color:#475569;font-size:13px;text-align:center;line-height:2;box-shadow:0 2px 8px rgba(0,0,0,0.06);max-width:600px;width:100%}
+  .tip b{color:#0284c7}
+  img{width:100%;max-width:1200px;display:block;border-radius:14px;box-shadow:0 6px 32px rgba(0,0,0,0.12);cursor:pointer;-webkit-touch-callout:default;user-select:none}
+</style>
+</head>
+<body>
+<div class="tip">
+  📱 모바일: 이미지를 <b>길게 누르세요</b> → 사진 앱에 저장<br>
+  💻 PC: 이미지 <b>우클릭</b> → 이미지를 다른 이름으로 저장
+</div>
+<img src="${imgUrl}" alt="${fname}"/>
+</body>
+</html>`);
+  w.document.close();
 }
 
 // ─── Main App ──────────────────────────────────────────────────────────────
@@ -822,7 +773,6 @@ export default function SkatingScheduleApp() {
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkSelected, setBulkSelected] = useState(new Set());
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
-  const [showDownload, setShowDownload] = useState(false);
 
   useEffect(() => {
     const local = loadMonthData(year, month);
@@ -893,7 +843,7 @@ export default function SkatingScheduleApp() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => setShowDownload(true)}
+            <button onClick={() => openCalendarImage(year, month, data)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all hover:opacity-90"
               style={{ background:"linear-gradient(135deg,#eff6ff,#f5f3ff)", border:"1px solid #bfdbfe", color:"#0284c7" }}>
               <DownloadIcon/>이미지 저장
@@ -1015,9 +965,6 @@ export default function SkatingScheduleApp() {
           </div>
         </div>
       )}
-
-      {/* Download Modal */}
-      {showDownload && <DownloadModal year={year} month={month} data={data} onClose={() => setShowDownload(false)}/>}
 
       {/* Detail Modal */}
       {selectedDay && !editDay && (
