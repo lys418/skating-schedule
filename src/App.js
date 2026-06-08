@@ -211,7 +211,7 @@ function SyncBadge({ status }) {
   }[status];
   if (!cfg) return null;
   return (
-    <span className={`inline-flex items-center gap-1 text-[10px] font-medium ${cfg.cls}`}>
+    <span className={`inline-flex items-center gap-1 text-xs font-semibold ${cfg.cls}`}>
       {cfg.spin && (
         <span className="inline-block w-2.5 h-2.5 rounded-full border border-current border-t-transparent"
               style={{ animation: "spin 0.8s linear infinite" }}/>
@@ -463,50 +463,50 @@ function CalendarCell({ day, year, month, entry, isToday, onClick, bulkMode, isS
 
   return (
     <div onClick={() => onClick(day)}
-         className="min-h-[90px] p-2 rounded-xl cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:z-10 relative select-none"
+         className="min-h-[108px] p-2 rounded-xl cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:z-10 relative select-none"
          style={{
            background: isSelected ? "#dbeafe" : isRest ? "#fef2f2" : holidayName ? "#fff8f8" : isEmpty ? "#f8fafc" : "#ffffff",
            border: isSelected ? "1.5px solid #60a5fa" : isToday ? "1.5px solid #38bdf8" : holidayName ? "1px solid #fecaca" : "1px solid #e2e8f0",
            boxShadow: isSelected ? "0 0 0 3px rgba(96,165,250,0.2)" : isToday ? "0 0 0 3px rgba(56,189,248,0.15)" : "0 1px 3px rgba(0,0,0,0.04)",
          }}>
       {bulkMode && (
-        <div className={`absolute top-1.5 right-1.5 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? "bg-sky-500 border-sky-500" : "border-slate-300 bg-white"}`}>
-          {isSelected && <svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.5"><polyline points="2,6 5,9 10,3"/></svg>}
+        <div className={`absolute top-1.5 right-1.5 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? "bg-sky-500 border-sky-500" : "border-slate-300 bg-white"}`}>
+          {isSelected && <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.5"><polyline points="2,6 5,9 10,3"/></svg>}
         </div>
       )}
       {/* Day number */}
-      <div className={`text-sm font-bold ${isRed ? "text-red-500" : isSat ? "text-sky-500" : "text-slate-700"}`}>
-        {isToday ? <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs text-white" style={{ background: "linear-gradient(135deg,#38bdf8,#818cf8)" }}>{day}</span> : day}
+      <div className={`text-base font-black mb-0.5 ${isRed ? "text-red-500" : isSat ? "text-sky-500" : "text-slate-800"}`}>
+        {isToday ? <span className="inline-flex items-center justify-center w-7 h-7 rounded-full text-sm text-white" style={{ background: "linear-gradient(135deg,#38bdf8,#818cf8)" }}>{day}</span> : day}
       </div>
-      {holidayName && <div className="text-[8px] text-red-400 font-semibold truncate leading-tight mb-0.5">{holidayName}</div>}
-      {entry?.note && <div className="text-[9px] text-amber-600 font-semibold mb-1 truncate">{entry.note}</div>}
+      {holidayName && <div className="text-[11px] text-red-400 font-bold truncate leading-tight mb-0.5">{holidayName}</div>}
+      {entry?.note && <div className="text-[11px] text-amber-600 font-bold mb-1 truncate">{entry.note}</div>}
 
       {isRest && (
-        <div className="flex items-center gap-1">
-          <span className="text-sm">🏖️</span>
-          <span className="text-[9px] text-red-500 font-bold">휴무</span>
+        <div className="flex items-center gap-1 mt-1">
+          <span className="text-base">🏖️</span>
+          <span className="text-xs text-red-500 font-bold">휴무</span>
         </div>
       )}
 
       {!isRest && entry?.subway && (
         <div className="mb-0.5">
-          <span className="text-[8px] px-1 py-0.5 rounded text-slate-600 font-bold" style={{ background: "rgba(100,116,139,0.12)" }}>지하</span>
+          <span className="text-[11px] px-1.5 py-0.5 rounded text-slate-600 font-bold" style={{ background: "rgba(100,116,139,0.12)" }}>지하</span>
         </div>
       )}
 
       {!isRest && hasAM && (
         <div className="flex items-center gap-1 mb-0.5 flex-wrap">
-          <div className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0"/>
-          <span className="text-[9px] text-sky-600 font-medium">{entry.amStart}~{entry.amEnd}</span>
-          {entry?.amFenceSet    && <span className="text-[9px] text-amber-600 font-bold">▥</span>}
-          {entry?.amFenceRemove && <span className="text-[9px] text-purple-600 font-bold">▤</span>}
+          <div className="w-2 h-2 rounded-full bg-sky-400 shrink-0"/>
+          <span className="text-xs text-sky-600 font-bold">{entry.amStart}~{entry.amEnd}</span>
+          {entry?.amFenceSet    && <span className="text-xs text-amber-600 font-black">▥</span>}
+          {entry?.amFenceRemove && <span className="text-xs text-purple-600 font-black">▤</span>}
         </div>
       )}
 
       {!isRest && hasPM && (
         <div className="flex items-center gap-1 mb-0.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"/>
-          <span className="text-[9px] text-emerald-700 truncate">PM {entry.pmGround}/{entry.pmSkating}</span>
+          <div className="w-2 h-2 rounded-full bg-emerald-400 shrink-0"/>
+          <span className="text-xs text-emerald-700 font-bold truncate">PM {entry.pmGround}/{entry.pmSkating}</span>
         </div>
       )}
 
@@ -815,8 +815,8 @@ export default function SkatingScheduleApp() {
               <IceBlade/>
             </div>
             <div>
-              <h1 className="text-base font-black tracking-tight text-slate-800">장호성 쇼트트랙팀</h1>
-              <p className="text-[10px] text-slate-400 flex items-center gap-1.5">
+              <h1 className="text-lg font-black tracking-tight text-slate-800">장호성 쇼트트랙팀</h1>
+              <p className="text-xs text-slate-400 flex items-center gap-1.5">
                 훈련 일정 관리 시스템
                 <SyncBadge status={syncStatus}/>
               </p>
@@ -824,12 +824,12 @@ export default function SkatingScheduleApp() {
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => openCalendarImage(year, month, data)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all hover:opacity-90"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all hover:opacity-90"
               style={{ background:"linear-gradient(135deg,#eff6ff,#f5f3ff)", border:"1px solid #bfdbfe", color:"#0284c7" }}>
               <DownloadIcon/>이미지 저장
             </button>
             <button onClick={() => { setBulkMode(b => !b); setBulkSelected(new Set()); }}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all hover:opacity-90"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all hover:opacity-90"
               style={bulkMode
                 ? { background:"linear-gradient(135deg,#38bdf8,#818cf8)", border:"1px solid #38bdf8", color:"#fff" }
                 : { background:"#f8fafc", border:"1px solid #e2e8f0", color:"#64748b" }}>
@@ -846,13 +846,13 @@ export default function SkatingScheduleApp() {
             <ChevronLeft/>
           </button>
           <div className="text-center">
-            <div className="text-2xl font-black text-slate-800">{year}<span className="text-sky-500">년</span></div>
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-sm font-semibold text-slate-500">{MONTHS_KO[month]}</span>
+            <div className="text-3xl font-black text-slate-800">{year}<span className="text-sky-500">년</span></div>
+            <div className="flex items-center justify-center gap-2 mt-0.5">
+              <span className="text-lg font-black text-slate-600">{MONTHS_KO[month]}</span>
               {(year !== today.getFullYear() || month !== today.getMonth()) && (
                 <button
                   onClick={() => { setYear(today.getFullYear()); setMonth(today.getMonth()); setSelectedDay(null); }}
-                  className="px-2 py-0.5 rounded-md text-[11px] font-bold transition-all hover:opacity-80"
+                  className="px-2.5 py-0.5 rounded-md text-xs font-bold transition-all hover:opacity-80"
                   style={{ background: "#eff6ff", border: "1px solid #bfdbfe", color: "#0284c7" }}>
                   오늘
                 </button>
@@ -865,18 +865,16 @@ export default function SkatingScheduleApp() {
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap gap-3 mb-4 text-[10px]">
+        <div className="flex flex-wrap gap-x-4 gap-y-1.5 mb-4">
           {[
-            { dot:"bg-sky-400",     label:"AM 스케이팅" },
-            { dot:"bg-emerald-400", label:"PM 훈련" },
-            { badge:"amber",        label:"팬스 치기" },
-            { badge:"purple",       label:"팬스 걷기" },
-            { badge:"slate",        label:"지하(B1↓)" },
-          ].map(({ dot, badge, label }) => (
-            <div key={label} className="flex items-center gap-1.5 text-slate-500">
-              {dot && <div className={`w-2 h-2 rounded-full ${dot}`}/>}
-              {badge && <span className={`px-1 py-0.5 rounded text-[8px] font-bold ${badge==="amber"?"text-amber-700 bg-amber-100":badge==="purple"?"text-purple-700 bg-purple-100":"text-slate-600 bg-slate-100"}`}>■</span>}
-              {label}
+            { icon: <div className="w-2.5 h-2.5 rounded-full bg-sky-400"/>,     label:"AM 스케이팅", color:"text-slate-600" },
+            { icon: <div className="w-2.5 h-2.5 rounded-full bg-emerald-400"/>, label:"PM 훈련",      color:"text-slate-600" },
+            { icon: <span className="text-sm font-black text-amber-600">▥</span>, label:"팬스 치기",  color:"text-slate-600" },
+            { icon: <span className="text-sm font-black text-purple-600">▤</span>, label:"팬스 걷기", color:"text-slate-600" },
+            { icon: <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-1 rounded">지하</span>, label:"지하(B1↓)", color:"text-slate-600" },
+          ].map(({ icon, label, color }) => (
+            <div key={label} className={`flex items-center gap-1.5 text-xs font-semibold ${color}`}>
+              {icon}{label}
             </div>
           ))}
         </div>
@@ -886,7 +884,7 @@ export default function SkatingScheduleApp() {
           {/* Day headers */}
           <div className="grid grid-cols-7" style={{ borderBottom: "1px solid #f1f5f9" }}>
             {DAYS_KO.map((d, i) => (
-              <div key={d} className="py-2.5 text-center text-xs font-bold tracking-widest"
+              <div key={d} className="py-3 text-center text-sm font-black tracking-widest"
                    style={{ color: i===0 ? "#ef4444" : i===6 ? "#0284c7" : "#94a3b8", background: i===0 ? "#fff5f5" : i===6 ? "#eff6ff" : "transparent" }}>
                 {d}
               </div>
@@ -916,7 +914,7 @@ export default function SkatingScheduleApp() {
           </div>
         </div>
 
-        <div className="mt-4 text-center text-xs text-slate-400">
+        <div className="mt-4 text-center text-sm text-slate-400 font-medium">
           {bulkMode ? "날짜를 탭해서 선택 · 다시 탭하면 해제" : "날짜를 탭하면 상세보기 · 빈 날짜를 탭하면 바로 입력"}
         </div>
       </div>
