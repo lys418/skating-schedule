@@ -891,7 +891,17 @@ export default function SkatingScheduleApp() {
           </button>
           <div className="text-center">
             <div className="text-2xl font-black text-white">{year}<span className="text-sky-400">년</span></div>
-            <div className="text-sm font-medium text-slate-400">{MONTHS_KO[month]}</div>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-sm font-medium text-slate-400">{MONTHS_KO[month]}</span>
+              {(year !== today.getFullYear() || month !== today.getMonth()) && (
+                <button
+                  onClick={() => { setYear(today.getFullYear()); setMonth(today.getMonth()); setSelectedDay(null); }}
+                  className="px-2 py-0.5 rounded-md text-[11px] font-bold text-sky-300 hover:text-white transition-all"
+                  style={{ background: "rgba(56,189,248,0.15)", border: "1px solid rgba(56,189,248,0.3)" }}>
+                  오늘
+                </button>
+              )}
+            </div>
           </div>
           <button onClick={nextMonth} className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all">
             <ChevronRight/>
